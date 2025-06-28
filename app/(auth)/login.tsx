@@ -52,7 +52,11 @@ export default function LoginScreen() {
       const { error } = await signIn(email, password);
 
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
+        if (error.message.includes('Email not confirmed')) {
+          setErrors({ 
+            general: 'Votre email n\'a pas encore été confirmé. Veuillez vérifier votre boîte de réception et cliquer sur le lien de confirmation avant de vous connecter.' 
+          });
+        } else if (error.message.includes('Invalid login credentials')) {
           setErrors({ general: 'Email ou mot de passe incorrect' });
         } else {
           setErrors({ general: error.message });
