@@ -86,8 +86,8 @@ export default function RegisterScreen() {
           setErrors({ general: error.message });
         }
       } else {
-        // Registration successful
-        router.replace('/(tabs)');
+        // Registration successful - redirect to email sent page
+        router.replace('/(auth)/email-sent');
       }
     } catch (error) {
       setErrors({ general: 'Une erreur est survenue. Veuillez réessayer.' });
