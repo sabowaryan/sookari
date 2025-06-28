@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { UserRoleType } from '@/lib/supabase';
-import { Shield, AlertCircle } from 'lucide-react-native';
+import { Shield, CircleAlert as AlertCircle } from 'lucide-react-native';
 
 interface RoleGuardProps {
   requiredRole: UserRoleType;
