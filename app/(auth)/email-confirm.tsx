@@ -13,14 +13,21 @@ import { supabase } from '@/lib/supabase';
 
 export default function EmailConfirmScreen() {
   const router = useRouter();
-  const { confirmation_url } = useLocalSearchParams();
+  const { token_hash, type } = useLocalSearchParams();
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Auto-confirm when component mounts if we have the required parameters
+  useEffect(() => {
+    if (token_hash && type && !confirmed && !loading) {
+      handleConfirmEmail();
+    }
+  }, [token_hash, type]);
+
   const handleConfirmEmail = async () => {
-    if (!confirmation_url || typeof confirmation_url !== 'string') {
-      setError('Lien de confirmation invalide');
+    if (!token_hash || !type || typeof token_hash !== 'string' || typeof type !== 'string') {
+      setError('Lien de confirmation invalide. Paramètres manquants.');
       return;
     }
 
@@ -28,18 +35,9 @@ export default function EmailConfirmScreen() {
     setError(null);
 
     try {
-      // Extract token and type from the confirmation URL
-      const url = new URL(confirmation_url);
-      const token = url.searchParams.get('token');
-      const type = url.searchParams.get('type');
-
-      if (!token || !type) {
-        throw new Error('Token ou type manquant dans l\'URL de confirmation');
-      }
-
-      // Verify the email using Supabase
+      // Verify the email using Supabase with the direct token_hash and type
       const { error } = await supabase.auth.verifyOtp({
-        token_hash: token,
+        token_hash: token_hash,
         type: type as any,
       });
 
@@ -52,7 +50,7 @@ export default function EmailConfirmScreen() {
       // Redirect to login after a short delay
       setTimeout(() => {
         router.replace('/(auth)/login');
-      }, 2000);
+      }, 3000);
 
     } catch (error: any) {
       console.error('Email confirmation error:', error);
@@ -61,6 +59,33 @@ export default function EmailConfirmScreen() {
       setLoading(false);
     }
   };
+
+  // Show error state if no required parameters
+  if (!token_hash || !type) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <View style={styles.iconContainer}>
+            <View style={[styles.iconBackground, styles.errorBackground]}>
+              <XCircle size={48} color="#FF4444" />
+            </View>
+          </View>
+
+          <Text style={styles.title}>Lien invalide</Text>
+          <Text style={styles.subtitle}>
+            Ce lien de confirmation n'est pas valide ou a expiré. Veuillez demander un nouveau lien de confirmation.
+          </Text>
+
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.replace('/(auth)/register')}
+          >
+            <Text style={styles.backButtonText}>Retour à l'inscription</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (confirmed) {
     return (
@@ -74,13 +99,20 @@ export default function EmailConfirmScreen() {
 
           <Text style={styles.title}>Email confirmé!</Text>
           <Text style={styles.subtitle}>
-            Votre adresse email a été confirmée avec succès. Vous allez être redirigé vers la page de connexion.
+            Votre adresse email a été confirmée avec succès. Vous allez être redirigé vers la page de connexion dans quelques secondes.
           </Text>
 
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color="#FF6B35" />
             <Text style={styles.loadingText}>Redirection en cours...</Text>
           </View>
+
+          <TouchableOpacity 
+            style={styles.confirmButton}
+            onPress={() => router.replace('/(auth)/login')}
+          >
+            <Text style={styles.confirmButtonText}>Aller à la connexion</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -108,15 +140,16 @@ export default function EmailConfirmScreen() {
 
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => router.replace('/(auth)/login')}
+            onPress={() => router.replace('/(auth)/register')}
           >
-            <Text style={styles.backButtonText}>Retour à la connexion</Text>
+            <Text style={styles.backButtonText}>Retour à l'inscription</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
+  // Loading state while confirming
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -126,30 +159,14 @@ export default function EmailConfirmScreen() {
           </View>
         </View>
 
-        <Text style={styles.title}>Confirmer votre email</Text>
+        <Text style={styles.title}>Confirmation en cours...</Text>
         <Text style={styles.subtitle}>
-          Cliquez sur le bouton ci-dessous pour confirmer votre adresse email et activer votre compte Sookari.
+          Nous confirmons votre adresse email. Veuillez patienter quelques instants.
         </Text>
 
-        <TouchableOpacity 
-          style={[styles.confirmButton, loading && styles.confirmButtonDisabled]}
-          onPress={handleConfirmEmail}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <>
-              <CheckCircle size={20} color="#FFF" />
-              <Text style={styles.confirmButtonText}>Confirmer mon email</Text>
-            </>
-          )}
-        </TouchableOpacity>
-
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>
-            En confirmant votre email, vous pourrez accéder à toutes les fonctionnalités de Sookari et commencer à acheter, vendre ou livrer sur notre plateforme.
-          </Text>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FF6B35" />
+          <Text style={styles.loadingText}>Confirmation de votre email...</Text>
         </View>
       </View>
     </SafeAreaView>
@@ -208,23 +225,18 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 32,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 24,
+    marginTop: 20,
     shadowColor: '#FF6B35',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
-  confirmButtonDisabled: {
-    opacity: 0.6,
-  },
   confirmButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#FFF',
+    textAlign: 'center',
   },
   retryButton: {
     backgroundColor: '#FF6B35',
@@ -252,26 +264,12 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   loadingContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
+    marginBottom: 20,
   },
   loadingText: {
     fontSize: 14,
     color: '#666',
-  },
-  infoContainer: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF6B35',
-  },
-  infoText: {
-    fontSize: 12,
-    color: '#666',
-    lineHeight: 18,
-    textAlign: 'center',
   },
 });

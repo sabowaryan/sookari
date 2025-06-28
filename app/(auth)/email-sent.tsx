@@ -5,12 +5,29 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
-  Image,
+  Alert,
 } from 'react-native';
 import { Link } from 'expo-router';
 import { Mail, ArrowLeft, RefreshCw } from 'lucide-react-native';
+import { supabase } from '@/lib/supabase';
 
 export default function EmailSentScreen() {
+  const handleResendEmail = async () => {
+    try {
+      // Note: In a real implementation, you would need to store the email
+      // or get it from the auth context. For now, we'll show an alert.
+      Alert.alert(
+        'Renvoyer l\'email',
+        'Pour renvoyer l\'email de confirmation, veuillez retourner à la page d\'inscription et créer un nouveau compte avec la même adresse email.',
+        [
+          { text: 'OK', style: 'default' }
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de renvoyer l\'email. Veuillez réessayer plus tard.');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -59,7 +76,7 @@ export default function EmailSentScreen() {
               <Text style={styles.stepNumberText}>3</Text>
             </View>
             <Text style={styles.stepText}>
-              Confirmez votre email sur la page qui s'ouvre
+              Votre email sera automatiquement confirmé
             </Text>
           </View>
         </View>
@@ -69,11 +86,12 @@ export default function EmailSentScreen() {
           <Text style={styles.helpText}>
             • Vérifiez votre dossier spam ou courrier indésirable{'\n'}
             • Assurez-vous d'avoir saisi la bonne adresse email{'\n'}
-            • L'email peut prendre quelques minutes à arriver
+            • L'email peut prendre quelques minutes à arriver{'\n'}
+            • Le lien expire après 24 heures
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.resendButton}>
+        <TouchableOpacity style={styles.resendButton} onPress={handleResendEmail}>
           <RefreshCw size={16} color="#FF6B35" />
           <Text style={styles.resendButtonText}>Renvoyer l'email</Text>
         </TouchableOpacity>
