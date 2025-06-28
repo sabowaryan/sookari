@@ -47,6 +47,27 @@ const categories = [
   { id: 4, name: 'Maison', icon: '🏠', color: '#8B5CF6' },
 ];
 
+function CartIcon() {
+  const { state } = useCart();
+  
+  return (
+    <Link href="/cart" asChild>
+      <TouchableOpacity style={styles.cartButton}>
+        <View style={styles.cartIconContainer}>
+          <ShoppingCart size={24} color="#FF6B35" />
+          {state.totalItems > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>
+                {state.totalItems > 99 ? '99+' : state.totalItems}
+              </Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    </Link>
+  );
+}
+
 export default function HomeScreen() {
   const { addItem, getItemQuantity } = useCart();
 
@@ -73,12 +94,16 @@ export default function HomeScreen() {
                 <Text style={styles.location}>Kinshasa, Gombe</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.profileButton}>
-              <Image
-                source={{ uri: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg' }}
-                style={styles.profileImage}
-              />
-            </TouchableOpacity>
+            
+            <View style={styles.headerActions}>
+              <CartIcon />
+              <TouchableOpacity style={styles.profileButton}>
+                <Image
+                  source={{ uri: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg' }}
+                  style={styles.profileImage}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
           
           <View style={styles.brandContainer}>
@@ -245,6 +270,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginLeft: 4,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  cartButton: {
+    padding: 8,
+  },
+  cartIconContainer: {
+    position: 'relative',
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#FF4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  cartBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
   },
   profileButton: {
     width: 44,

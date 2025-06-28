@@ -9,11 +9,13 @@ import {
   Image,
   Alert,
 } from 'react-native';
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, MapPin, CreditCard } from 'lucide-react-native';
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, MapPin, CreditCard, ArrowLeft } from 'lucide-react-native';
 import { useCart } from '@/context/CartContext';
+import { useRouter } from 'expo-router';
 
 export default function CartScreen() {
   const { state, removeItem, updateQuantity, clearCart } = useCart();
+  const router = useRouter();
 
   const handleCheckout = () => {
     if (state.items.length === 0) {
@@ -52,8 +54,11 @@ export default function CartScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <ArrowLeft size={24} color="#1A1A1A" />
+          </TouchableOpacity>
           <Text style={styles.title}>Mon Panier</Text>
-          <Text style={styles.subtitle}>0 article</Text>
+          <View style={styles.placeholder} />
         </View>
         
         <View style={styles.emptyContainer}>
@@ -64,7 +69,7 @@ export default function CartScreen() {
           <Text style={styles.emptySubtitle}>
             Découvrez nos produits et ajoutez-les à votre panier pour commencer vos achats.
           </Text>
-          <TouchableOpacity style={styles.shopButton}>
+          <TouchableOpacity style={styles.shopButton} onPress={() => router.back()}>
             <Text style={styles.shopButtonText}>Commencer mes achats</Text>
           </TouchableOpacity>
         </View>
@@ -75,10 +80,16 @@ export default function CartScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Mon Panier</Text>
-        <Text style={styles.subtitle}>
-          {state.totalItems} article{state.totalItems > 1 ? 's' : ''}
-        </Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <ArrowLeft size={24} color="#1A1A1A" />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.title}>Mon Panier</Text>
+          <Text style={styles.subtitle}>
+            {state.totalItems} article{state.totalItems > 1 ? 's' : ''}
+          </Text>
+        </View>
+        <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -204,6 +215,19 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  placeholder: {
+    width: 40,
   },
   title: {
     fontSize: 24,
