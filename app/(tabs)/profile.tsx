@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Image,
+  Alert,
 } from 'react-native';
-import { User, Settings, ShoppingBag, Heart, CreditCard, CircleHelp as HelpCircle, Bell, MapPin, Star, ChevronRight, Shield, LogOut } from 'lucide-react-native';
+import { User, Settings, ShoppingBag, Heart, CreditCard, CircleHelp as HelpCircle, Bell, MapPin, Star, ChevronRight, Shield, LogOut, Plus } from 'lucide-react-native';
+import { useAuth } from '@/context/AuthContext';
 
 const menuItems = [
   {
@@ -80,6 +82,51 @@ const menuItems = [
 ];
 
 export default function ProfileScreen() {
+  const { user, profile, userRoles, signOut, hasRole, requestRole } = useAuth();
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Déconnexion',
+      'Êtes-vous sûr de vouloir vous déconnecter?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Déconnexion', onPress: signOut, style: 'destructive' },
+      ]
+    );
+  };
+
+  const handleRequestRole = (roleName: 'seller' | 'delivery_driver') => {
+    const roleDisplayName = roleName === 'seller' ? 'vendeur' : 'livreur';
+    
+    Alert.alert(
+      `Devenir ${roleDisplayName}`,
+      `Voulez-vous demander le rôle de ${roleDisplayName}? Cela vous permettra d'accéder à de nouvelles fonctionnalités.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { 
+          text: 'Demander', 
+          onPress: async () => {
+            const { error } = await requestRole(roleName);
+            if (error) {
+              Alert.alert('Erreur', 'Une erreur est survenue lors de la demande de rôle.');
+            } else {
+              Alert.alert('Succès', `Votre demande de rôle ${roleDisplayName} a été envoyée!`);
+            }
+          }
+        },
+      ]
+    );
+  };
+
+  const getRoleDisplayName = (roleName: string) => {
+    switch (roleName) {
+      case 'seller': return 'Vendeur';
+      case 'delivery_driver': return 'Livreur';
+      case 'customer': return 'Client';
+      default: return roleName;
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -87,7 +134,9 @@ export default function ProfileScreen() {
         <View style={styles.profileHeader}>
           <View style={styles.profileImageContainer}>
             <Image
-              source={{ uri: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg' }}
+              source={{ 
+                uri: profile?.avatar_url || 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg' 
+              }}
               style={styles.profileImage}
             />
             <TouchableOpacity style={styles.editImageButton}>
@@ -96,14 +145,55 @@ export default function ProfileScreen() {
           </View>
           
           <View style={styles.profileInfo}>
-            <Text style={styles.userName}>Marie Kabamba</Text>
-            <Text style={styles.userEmail}>marie.kabamba@gmail.com</Text>
-            <Text style={styles.userLocation}>Kinshasa, Gombe</Text>
+            <Text style={styles.userName}>
+              {profile?.full_name || user?.email?.split('@')[0] || 'Utilisateur'}
+            </Text>
+            <Text style={styles.userEmail}>{user?.email}</Text>
+            {profile?.location && (
+              <Text style={styles.userLocation}>{profile.location}</Text>
+            )}
           </View>
 
           <TouchableOpacity style={styles.editProfileButton}>
             <Text style={styles.editProfileText}>Modifier le profil</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* User Roles */}
+        <View style={styles.rolesSection}>
+          <Text style={styles.rolesSectionTitle}>Mes rôles</Text>
+          <View style={styles.rolesContainer}>
+            {userRoles.map((userRole) => (
+              <View key={userRole.id} style={styles.roleChip}>
+                <Text style={styles.roleChipText}>
+                  {getRoleDisplayName(userRole.role?.name || '')}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Role Request Buttons */}
+          <View style={styles.roleRequestContainer}>
+            {!hasRole('seller') && (
+              <TouchableOpacity 
+                style={styles.roleRequestButton}
+                onPress={() => handleRequestRole('seller')}
+              >
+                <Plus size={16} color="#FF6B35" />
+                <Text style={styles.roleRequestText}>Devenir vendeur</Text>
+              </TouchableOpacity>
+            )}
+            
+            {!hasRole('delivery_driver') && (
+              <TouchableOpacity 
+                style={styles.roleRequestButton}
+                onPress={() => handleRequestRole('delivery_driver')}
+              >
+                <Plus size={16} color="#00B4A6" />
+                <Text style={styles.roleRequestText}>Devenir livreur</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* Stats Section */}
@@ -161,7 +251,7 @@ export default function ProfileScreen() {
           
           <Text style={styles.versionText}>Version 1.0.0</Text>
           
-          <TouchableOpacity style={styles.logoutButton}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
             <LogOut size={20} color="#FF4444" />
             <Text style={styles.logoutText}>Se déconnecter</Text>
           </TouchableOpacity>
@@ -238,6 +328,55 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#FFF',
+  },
+  rolesSection: {
+    backgroundColor: '#FFF',
+    marginTop: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  rolesSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 12,
+  },
+  rolesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  roleChip: {
+    backgroundColor: '#FF6B35',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  roleChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFF',
+  },
+  roleRequestContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  roleRequestButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  roleRequestText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666',
   },
   statsSection: {
     backgroundColor: '#FFF',
