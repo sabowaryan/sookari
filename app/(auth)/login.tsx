@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, Chrome, Facebook } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 
 export default function LoginScreen() {
@@ -18,9 +18,10 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState<'google' | 'facebook' | null>(null);
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
 
-  const { signIn } = useAuth();
+  const { signIn, signInWithOAuth } = useAuth();
   const router = useRouter();
 
   const validateForm = () => {
@@ -68,6 +69,28 @@ export default function LoginScreen() {
       setErrors({ general: 'Une erreur est survenue. Veuillez réessayer.' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+    setSocialLoading(provider);
+    setErrors({});
+
+    try {
+      const { error } = await signInWithOAuth(provider);
+
+      if (error) {
+        setErrors({ 
+          general: `Erreur de connexion avec ${provider === 'google' ? 'Google' : 'Facebook'}. Veuillez réessayer.` 
+        });
+      }
+      // Note: Success will be handled by the auth state change listener
+    } catch (error) {
+      setErrors({ 
+        general: `Une erreur est survenue lors de la connexion avec ${provider === 'google' ? 'Google' : 'Facebook'}.` 
+      });
+    } finally {
+      setSocialLoading(null);
     }
   };
 
@@ -155,6 +178,43 @@ export default function LoginScreen() {
               <Text style={styles.loginButtonText}>Se connecter</Text>
             )}
           </TouchableOpacity>
+        </View>
+
+        {/* Social Login Section */}
+        <View style={styles.socialLoginContainer}>
+          <View style={styles.separator}>
+            <View style={styles.separatorLine} />
+            <Text style={styles.separatorText}>Ou continuer avec</Text>
+            <View style={styles.separatorLine} />
+          </View>
+
+          <View style={styles.socialButtons}>
+            <TouchableOpacity 
+              style={[styles.socialButton, socialLoading === 'google' && styles.socialButtonLoading]}
+              onPress={() => handleSocialLogin('google')}
+              disabled={socialLoading !== null}
+            >
+              {socialLoading === 'google' ? (
+                <ActivityIndicator size="small" color="#1A1A1A" />
+              ) : (
+                <Chrome size={24} color="#1A1A1A" />
+              )}
+              <Text style={styles.socialButtonText}>Google</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.socialButton, socialLoading === 'facebook' && styles.socialButtonLoading]}
+              onPress={() => handleSocialLogin('facebook')}
+              disabled={socialLoading !== null}
+            >
+              {socialLoading === 'facebook' ? (
+                <ActivityIndicator size="small" color="#1877F2" />
+              ) : (
+                <Facebook size={24} color="#1877F2" />
+              )}
+              <Text style={styles.socialButtonText}>Facebook</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.footer}>
@@ -286,6 +346,55 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFF',
+  },
+  socialLoginContainer: {
+    marginBottom: 32,
+  },
+  separator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E5E5EA',
+  },
+  separatorText: {
+    marginHorizontal: 16,
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  socialButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  socialButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  socialButtonLoading: {
+    opacity: 0.7,
+  },
+  socialButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
   },
   footer: {
     flexDirection: 'row',
