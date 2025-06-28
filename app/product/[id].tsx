@@ -13,7 +13,7 @@ import {
 import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 import { ArrowLeft, Star, Heart, ShoppingCart, MapPin, Shield, Truck, MessageCircle, Minus, Plus, Play, Pause } from 'lucide-react-native';
 import { useCart } from '@/context/CartContext';
-import { Video, ResizeMode } from 'expo-av';
+import { VideoView, useVideoPlayer } from 'expo-video';
 
 const { width } = Dimensions.get('window');
 
@@ -258,11 +258,16 @@ export default function ProductDetailScreen() {
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const videoRef = useRef<Video>(null);
   
   const product = allProducts.find(p => p.id === parseInt(id as string));
   const cartQuantity = product ? getItemQuantity(product.id) : 0;
+
+  // Video player for the first video (if any)
+  const firstVideoMedia = product?.media.find(media => media.type === 'video');
+  const player = useVideoPlayer(firstVideoMedia?.uri || '', player => {
+    player.loop = true;
+    player.muted = true;
+  });
 
   // Calculate delivery cost (simulated 5km distance)
   const deliveryDistance = 5;
@@ -311,39 +316,27 @@ export default function ProductDetailScreen() {
     }
   };
 
-  const handleVideoPlayPause = async () => {
-    if (videoRef.current) {
-      if (isVideoPlaying) {
-        await videoRef.current.pauseAsync();
-      } else {
-        await videoRef.current.playAsync();
-      }
-      setIsVideoPlaying(!isVideoPlaying);
-    }
-  };
-
   const renderMediaItem = (media: any, index: number) => {
     if (media.type === 'video') {
       return (
         <View key={index} style={styles.mediaContainer}>
-          <Video
-            ref={videoRef}
-            source={{ uri: media.uri }}
+          <VideoView
             style={styles.productImage}
-            resizeMode={ResizeMode.COVER}
-            shouldPlay={false}
-            isLooping
-            onPlaybackStatusUpdate={(status: any) => {
-              if (status.isLoaded) {
-                setIsVideoPlaying(status.isPlaying);
-              }
-            }}
+            player={player}
+            allowsFullscreen
+            allowsPictureInPicture
           />
           <TouchableOpacity 
             style={styles.videoPlayButton} 
-            onPress={handleVideoPlayPause}
+            onPress={() => {
+              if (player.playing) {
+                player.pause();
+              } else {
+                player.play();
+              }
+            }}
           >
-            {isVideoPlaying ? (
+            {player.playing ? (
               <Pause size={32} color="#FFF" />
             ) : (
               <Play size={32} color="#FFF" />
