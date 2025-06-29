@@ -119,6 +119,12 @@ Sookari est actuellement en développement actif avec les fonctionnalités princ
 - Chat en temps réel
 - Géolocalisation avancée
 
+- Ce projet a été réalisé dans le cadre du World’s Largest Hackathon organisé par Bolt.new.
+
+✅ Badge visible sur la page d’accueil
+
+✅ Badge cliquable redirigeant vers https://bolt.new
+
 ## 📄 Licence
 
 Ce projet est développé pour la communauté de Kinshasa dans le but de faciliter le commerce local et soutenir l'économie numérique en République Démocratique du Congo.
