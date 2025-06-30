@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: sookari-backend
+    env: node
+    branch: sookari-backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    plan: starter
+    region: oregon # ou choisir la région la plus proche de toi, ex: virginia
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://sookari_owner:npg_trLzG0veUCD5@ep-sweet-sun-a4xaa9k6-pooler.us-east-1.aws.neon.tech/sookari?sslmode=require
+        sync: true
+      - key: JWT_SECRET
+        value: sookari_super_jwt_secret
+        sync: true
+      - key: CLIENT_ORIGIN
+        value: http://localhost:8081
+        sync: true

@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -14,11 +14,14 @@ const schema = z.object({
   password: z.string().min(6),
 });
 
-router.post("/register", async (req, res) => {
+router.post("/register", async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = schema.parse(req.body);
     const exists = await prisma.user.findUnique({ where: { email } });
-    if (exists) return res.status(400).json({ error: "Email déjà utilisé" });
+    if (exists) {
+      res.status(400).json({ error: "Email déjà utilisé" });
+      return;
+    }
 
     const hashed = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({ data: { email, password: hashed } });
@@ -29,12 +32,13 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = schema.parse(req.body);
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ error: "Identifiants incorrects" });
+      res.status(401).json({ error: "Identifiants incorrects" });
+      return;
     }
     const token = createToken(user);
     res.json({ token });
@@ -43,8 +47,8 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.get("/me", auth, async (req, res) => {
-  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+router.get("/me", auth, async (req: Request, res: Response): Promise<void> => {
+  const user = await prisma.user.findUnique({ where: { id: (req as any).user.id } });
   res.json({ id: user?.id, email: user?.email });
 });
 
