@@ -13,23 +13,24 @@ import {
 import { Link, useRouter } from 'expo-router';
 import { ShoppingBag, Truck, Store, ArrowRight, Star, Users, MapPin } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
+import { SignIn, SignUp } from '@stackframe/react';
 
 const { width, height } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
-  const { session, loading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const fadeAnim = new Animated.Value(0);
   const slideAnim = new Animated.Value(50);
 
   useEffect(() => {
-    // Redirect if already authenticated
-    if (!loading && session) {
+    // Redirige si déjà authentifié
+    if (!loading && user) {
       router.replace('/(tabs)');
       return;
     }
 
-    // Start animations
+    // Démarre les animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -42,7 +43,7 @@ export default function WelcomeScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [session, loading]);
+  }, [user, loading]);
 
   if (loading) {
     return (
@@ -174,19 +175,9 @@ export default function WelcomeScreen() {
           },
         ]}
       >
-        <Link href="/(auth)/register" asChild>
-          <TouchableOpacity style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Créer un compte</Text>
-            <ArrowRight size={18} color="#FFF" />
-          </TouchableOpacity>
-        </Link>
-
-        <Link href="/(auth)/login" asChild>
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Text style={styles.secondaryButtonText}>J'ai déjà un compte</Text>
-          </TouchableOpacity>
-        </Link>
-
+        <SignUp fullPage={false} />
+        <View style={{ height: 16 }} />
+        <SignIn fullPage={false} />
         <Text style={styles.termsText}>
           En continuant, vous acceptez nos{' '}
           <Text style={styles.termsLink}>Conditions d'utilisation</Text>

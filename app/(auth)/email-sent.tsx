@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import { Mail, ArrowLeft, RefreshCw } from 'lucide-react-native';
-import { supabase } from '@/lib/supabase';
+// import { supabase } from '@/lib/supabase';
 
 export default function EmailSentScreen() {
   const handleResendEmail = async () => {
