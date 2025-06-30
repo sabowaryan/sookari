@@ -6,8 +6,8 @@ services:
     plan: starter
     region: oregon # ou virginia si plus proche
 
-    buildCommand: yarn install && yarn build
-    startCommand: yarn start
+    buildCommand: npm install && npm run build # Changed from yarn
+    startCommand: npm start # Changed from yarn
 
     envVars:
       - key: DATABASE_URL
