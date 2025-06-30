@@ -1,40 +1,31 @@
+// src/scripts/caching.ts
 import { PrismaClient } from '@prisma/client';
 import { withAccelerate } from '@prisma/extension-accelerate';
 
-const prisma = new PrismaClient()
-  .$extends(withAccelerate());
+const prisma = new PrismaClient().$extends(withAccelerate());
 
 async function main() {
-
   const startTime = performance.now();
 
-  // Learn more about caching strategies:
-  // https://www.prisma.io/docs/accelerate/caching
-  const cachedUsersWithPosts = await prisma.user.findMany({
+  const cachedUsers = await prisma.user.findMany({
     where: {
-      email: { contains: "alice" }
+      email: { contains: "alice" },
     },
-    include: { posts: true },
     cacheStrategy: {
-      swr: 30, // 30 seconds
-      ttl: 60  // 60 seconds
-    }
+      swr: 30, // seconds: revalidates stale cache
+      ttl: 60, // seconds: time-to-live in cache
+    },
   });
 
   const endTime = performance.now();
-
-  // Calculate the elapsed time
   const elapsedTime = endTime - startTime;
 
-  console.log(`The query took ${elapsedTime}ms.`);
-  console.log(`It returned the following data: \n`, cachedUsersWithPosts);
-
+  console.log(`Query took ${elapsedTime.toFixed(2)}ms.`);
+  console.log(`Results:\n`, cachedUsers);
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
+  .then(() => prisma.$disconnect())
   .catch(async (e) => {
     console.error(e);
     await prisma.$disconnect();
